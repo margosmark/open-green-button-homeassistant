@@ -99,8 +99,8 @@ def ontario_holiday_pricing_dates(year: int) -> frozenset[date]:
     pricing_days: set[date] = set()
     for holiday in sorted(actual_dates):
         observed = holiday
-        # Skip weekends and any day that is itself another holiday's calendar date.
-        while observed.weekday() >= 5 or (observed != holiday and observed in actual_dates):
+        # Skip weekends and any day already carrying another holiday's pricing.
+        while observed.weekday() >= 5 or observed in pricing_days:
             observed += timedelta(days=1)
         pricing_days.add(observed)
     return frozenset(pricing_days)

@@ -107,6 +107,39 @@ def test_holiday_price_rolls_forward_off_a_weekend() -> None:
     assert date(2028, 1, 3) in prices_2028
 
 
+def test_2027_rolling_holiday_christmas_and_boxing_day() -> None:
+    """Christmas lands Saturday in 2027, Boxing Day Sunday.
+
+    Christmas's observed weekday is Monday Dec 27. Without the rolling check, Boxing
+    Day's roll also matches Monday Dec 27 (not itself a holiday's *observed* day), the
+    set ends at 9 days and Tue Dec 28 becomes a normal-price winter weekday. With the
+    rolling check, Boxing Day skips the claimed Monday and lands on Dec 28 — ten days.
+    """
+    dates = ontario_holiday_pricing_dates(2027)
+    assert date(2027, 12, 25) not in dates  # Christmas, a Saturday
+    assert date(2027, 12, 26) not in dates  # Boxing Day, a Sunday
+    assert date(2027, 12, 27) in dates  # Christmas observed Monday
+    assert date(2027, 12, 28) in dates  # Boxing Day observed Tuesday
+    assert len(dates) == 10
+
+
+def test_2022_rolling_holiday_christmas_and_boxing_day() -> None:
+    """Christmas lands Sunday in 2022, Boxing Day Monday.
+
+    Christmas's observed weekday is Monday Dec 26 — which is also Boxing Day's calendar
+    date. Without the rolling check, Boxing Day claims Dec 26 (colliding), one pricing
+    day is lost. With the rolling check, Dec 26 carries Christmas and Boxing Day moves
+    to Dec 27. Christmas-observed also cannot roll beyond Boxing Day's already-claimed
+    Dec 27 — but the ordering guarantees the row processing emits Dec 26 (Christmas) and
+    Dec 27 (Boxing Day) since sorted(actual_dates) handles Christmas (Dec 25) first.
+    """
+    dates = ontario_holiday_pricing_dates(2022)
+    assert date(2022, 12, 25) not in dates  # Christmas, a Sunday
+    assert date(2022, 12, 26) in dates  # Christmas observed Monday (Boxing Day's date)
+    assert date(2022, 12, 27) in dates  # Boxing Day observed Tuesday
+    assert len(dates) == 10
+
+
 def test_holiday_is_off_peak_all_day_summer() -> None:
     """Canada Day 2026 (Wednesday) is off-peak for every hour — including hours that would
     otherwise be mid-peak and on-peak."""
